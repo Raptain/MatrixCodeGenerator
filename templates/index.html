@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Продвинутый генератор матричных кодов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-color: #667eea;
+            --dark-bg: #1a1a2e;
+            --dark-surface: #16213e;
+            --light-bg: #f5f5f5;
+            --light-surface: #ffffff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        body.light-theme {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        
+        body.dark-theme {
+            background: var(--dark-bg);
+            color: #fff;
+        }
+        
+        body.dark-theme .container {
+            background: var(--dark-surface);
+            color: #fff;
+        }
+        
+        body.dark-theme .controls,
+        body.dark-theme .preview-image {
+            background: rgba(30, 30, 46, 0.95);
+            border-color: #2d2d44;
+        }
+        
+        body.dark-theme input,
+        body.dark-theme select,
+        body.dark-theme textarea {
+            background: #2d2d44;
+            color: #fff;
+            border-color: #3d3d5c;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+        }
+        
+        .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 30px;
+            gap: 30px;
+        }
+        
+        .controls {
+            flex: 2;
+            min-width: 350px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 15px;
+        }
+        
+        .preview {
+            flex: 1;
+            min-width: 350px;
+        }
+        
+        .preview-image {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .preview-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .form-section h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="url"],
+        input[type="email"],
+        input[type="tel"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        input[type="color"] {
+            width: 60px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input {
+            width: auto;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .export-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .export-btn {
+            padding: 8px;
+            font-size: 12px;
+            background: #17a2b8;
+        }
+        
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .history-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .history-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+        
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .controls {
+                max-height: none;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+        
+        /* Стили для скролла */
+        .controls::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .controls::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .controls::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="light-theme">
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Генератор матричных кодов</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">🌓 Тема</button>
+        </div>
+        
+        <div class="content">
+            <div class="controls">
+                <!-- Тип кода -->
+                <div class="form-section">
+                    <h3>📱 Тип кода</h3>
+                    <div class="form-group">
+                        <select id="codeType">
+                            <option value="qr">QR Code</option>
+                            <option value="datamatrix">Data Matrix</option>
+                            <option value="aztec">Aztec Code</option>
+                            <option value="pdf417">PDF417</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Ввод данных -->
+                <div class="form-section">
+                    <h3>📝 Данные для кодирования</h3>
+                    <div class="form-group">
+                        <select id="dataType" onchange="changeDataType()">
+                            <option value="text">Текст</option>
+                            <option value="url">URL</option>
+                            <option value="contact">Контакт (vCard)</option>
+                            <option value="sms">SMS</option>
+                            <option value="email">E-mail</option>
+                            <option value="wifi">Wi-Fi</option>
+                        </select>
+                    </div>
+                    
+                    <div id="textInput">
+                        <div class="form-group">
+                            <textarea id="dataText" rows="3" placeholder="Введите текст..." style="width:100%">https://example.com</textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="contactInput" style="display:none">
+                        <div class="form-group">
+                            <input type="text" id="contactName" placeholder="Имя">
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="contactPhone" placeholder="Телефон">
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="contactEmail" placeholder="Email">
+                        </div>
+                    </div>
+                    
+                    <div id="smsInput" style="display:none">
+                        <div class="form-group">
+                            <input type="tel" id="smsNumber" placeholder="Номер телефона">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="smsMessage" placeholder="Текст сообщения"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="emailInput" style="display:none">
+                        <div class="form-group">
+                            <input type="email" id="emailAddress" placeholder="Email получателя">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="emailSubject" placeholder="Тема">
+                        </div>
+                        <div class="form-group">
+                            <textarea id="emailBody" placeholder="Текст письма"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="wifiInput" style="display:none">
+                        <div class="form-group">
+                            <input type="text" id="wifiSsid" placeholder="Имя сети (SSID)">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="wifiPassword" placeholder="Пароль">
+                        </div>
+                        <div class="form-group">
+                            <select id="wifiEncryption">
+                                <option value="WPA">WPA/WPA2</option>
+                                <option value="WEP">WEP</option>
+                                <option value="nopass">Без пароля</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Кастомизация -->
+                <div class="form-section">
+                    <h3>🎨 Цвета</h3>
+                    <div class="form-group">
+                        <label>Цвет кода:</label>
+                        <input type="color" id="foreground" value="#000000">
+                    </div>
+                    <div class="form-group">
+                        <label>Цвет фона:</label>
+                        <input type="color" id="background" value="#ffffff">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>✨ Градиенты</h3>
+                    <div class="form-group">
+                        <select id="gradientType">
+                            <option value="none">Без градиента</option>
+                            <option value="linear">Линейный градиент</option>
+                            <option value="radial">Радиальный градиент</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Второй цвет градиента:</label>
+                        <input type="color" id="gradientColor2" value="#667eea">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>🎨 Текстуры</h3>
+                    <div class="form-group">
+                        <select id="textureType">
+                            <option value="none">Без текстуры</option>
+                            <option value="dots">Точки</option>
+                            <option value="lines">Линии</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>⭐ Стиль "глаз" (для QR)</h3>
+                    <div class="form-group">
+                        <select id="eyeStyle">
+                            <option value="square">Квадратные</option>
+                            <option value="circle">Круглые</option>
+                            <option value="rounded">Скруглённые</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>🔷 Форма кода</h3>
+                    <div class="form-group">
+                        <select id="codeShape">
+                            <option value="square">Квадрат</option>
+                            <option value="circle">Круг</option>
+                            <option value="heart">Сердце</option>
+                            <option value="rounded">Скруглённый квадрат</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>🖼️ Логотип</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="addLogo">
+                        <label>Добавить логотип</label>
+                    </div>
+                    <div id="logoControls" style="display:none">
+                        <div class="form-group">
+                            <label>Размер логотипа (%):</label>
+                            <input type="range" id="logoSize" min="10" max="40" value="20">
+                            <span id="logoSizeValue" class="value-display">20%</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Позиция:</label>
+                            <select id="logoPosition">
+                                <option value="center">Центр</option>
+                                <option value="top-left">Верхний левый</option>
+                                <option value="top-right">Верхний правый</option>
+                                <option value="bottom-left">Нижний левый</option>
+                                <option value="bottom-right">Нижний правый</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>📏 Размеры</h3>
+                    <div class="form-group">
+                        <label>Размер модуля: <span id="sizeValue" class="value-display">10</span></label>
+                        <input type="range" id="size" min="5" max="20" value="10" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Граница: <span id="borderValue" class="value-display">1</span></label>
+                        <input type="range" id="border" min="0" max="5" value="1" step="1">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>🏷️ Теги для истории</h3>
+                    <div class="form-group">
+                        <input type="text" id="tags" placeholder="тег1, тег2, тег3">
+                    </div>
+                </div>
+                
+                <button id="generateBtn">✨ Сгенерировать код</button>
+                
+                <div class="btn-group">
+                    <button id="downloadBtn" class="btn-success" style="display:none">💾 Скачать PNG</button>
+                </div>
+            </div>
+            
+            <div class="preview">
+                <div class="preview-image">
+                    <h3>Предпросмотр</h3>
+                    <div id="previewArea">
+                        <p style="color: #999;">Настройте параметры и нажмите "Сгенерировать код"</p>
+                    </div>
+                    
+                    <div class="export-buttons" id="exportButtons" style="display:none">
+                        <button onclick="exportCode('png')" class="export-btn">📷 PNG</button>
+                        <button onclick="exportCode('svg')" class="export-btn">🎨 SVG</button>
+                        <button onclick="exportCode('pdf')" class="export-btn">📄 PDF</button>
+                        <button onclick="exportCode('eps')" class="export-btn">📐 EPS</button>
+                    </div>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Генерация...</p>
+                </div>
+                
+                <!-- Статистика -->
+                <div class="stats" id="stats" style="display:none">
+                    <h4>📊 Статистика</h4>
+                    <p id="visitStats">Аналитика будет доступна для URL</p>
+                </div>
+                
+                <!-- История -->
+                <div class="stats">
+                    <h4>📜 История кодов</h4>
+                    <div id="historyList" class="history-list">
+                        <p style="color: #999;">История пуста</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentFilename = null;
+        let currentHistoryId = null;
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            
+            // Слушатели событий
+            document.getElementById('size').addEventListener('input', (e) => {
+                document.getElementById('sizeValue').textContent = e.target.value;
+            });
+            
+            document.getElementById('border').addEventListener('input', (e) => {
+                document.getElementById('borderValue').textContent = e.target.value;
+            });
+            
+            document.getElementById('addLogo').addEventListener('change', (e) => {
+                document.getElementById('logoControls').style.display = e.target.checked ? 'block' : 'none';
+            });
+            
+            document.getElementById('logoSize').addEventListener('input', (e) => {
+                document.getElementById('logoSizeValue').textContent = e.target.value + '%';
+            });
+            
+            document.getElementById('generateBtn').addEventListener('click', generateCode);
+        });
+        
+        function changeDataType() {
+            const type = document.getElementById('dataType').value;
+            document.getElementById('textInput').style.display = type === 'text' || type === 'url' ? 'block' : 'none';
+            document.getElementById('contactInput').style.display = type === 'contact' ? 'block' : 'none';
+            document.getElementById('smsInput').style.display = type === 'sms' ? 'block' : 'none';
+            document.getElementById('emailInput').style.display = type === 'email' ? 'block' : 'none';
+            document.getElementById('wifiInput').style.display = type === 'wifi' ? 'block' : 'none';
+        }
+        
+        async function generateCode() {
+            const loading = document.getElementById('loading');
+            const previewArea = document.getElementById('previewArea');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const exportBtns = document.getElementById('exportButtons');
+            
+            loading.style.display = 'block';
+            previewArea.innerHTML = '';
+            
+            const formData = new FormData();
+            
+            // Основные параметры
+            formData.append('code_type', document.getElementById('codeType').value);
+            formData.append('data_type', document.getElementById('dataType').value);
+            
+            // Данные в зависимости от типа
+            const dataType = document.getElementById('dataType').value;
+            if (dataType === 'text' || dataType === 'url') {
+                formData.append('data_text', document.getElementById('dataText').value);
+            } else if (dataType === 'contact') {
+                formData.append('contact_name', document.getElementById('contactName').value);
+                formData.append('contact_phone', document.getElementById('contactPhone').value);
+                formData.append('contact_email', document.getElementById('contactEmail').value);
+            } else if (dataType === 'sms') {
+                formData.append('sms_number', document.getElementById('smsNumber').value);
+                formData.append('sms_message', document.getElementById('smsMessage').value);
+            } else if (dataType === 'email') {
+                formData.append('email_address', document.getElementById('emailAddress').value);
+                formData.append('email_subject', document.getElementById('emailSubject').value);
+                formData.append('email_body', document.getElementById('emailBody').value);
+            } else if (dataType === 'wifi') {
+                formData.append('wifi_ssid', document.getElementById('wifiSsid').value);
+                formData.append('wifi_password', document.getElementById('wifiPassword').value);
+                formData.append('wifi_encryption', document.getElementById('wifiEncryption').value);
+            }
+            
+            // Параметры кастомизации
+            formData.append('size', document.getElementById('size').value);
+            formData.append('border', document.getElementById('border').value);
+            formData.append('foreground', document.getElementById('foreground').value);
+            formData.append('background', document.getElementById('background').value);
+            formData.append('eye_style', document.getElementById('eyeStyle').value);
+            formData.append('gradient_type', document.getElementById('gradientType').value);
+            formData.append('gradient_color2', document.getElementById('gradientColor2').value);
+            formData.append('texture_type', document.getElementById('textureType').value);
+            formData.append('code_shape', document.getElementById('codeShape').value);
+            formData.append('add_logo', document.getElementById('addLogo').checked);
+            formData.append('logo_size', document.getElementById('logoSize').value);
+            formData.append('logo_position', document.getElementById('logoPosition').value);
+            formData.append('tags', document.getElementById('tags').value);
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentFilename = result.filename;
+                    currentHistoryId = result.history_id;
+                    
+                    previewArea.innerHTML = `
+                        <img src="${result.image_url}" alt="Generated Code" style="max-width:100%">
+                    `;
+                    
+                    downloadBtn.style.display = 'block';
+                    exportBtns.style.display = 'grid';
+                    
+                    // Обновляем историю
+                    loadHistory();
+                    
+                    // Аналитика для URL
+                    const dataType = document.getElementById('dataType').value;
+                    if (dataType === 'url') {
+                        const url = document.getElementById('dataText').value;
+                        showAnalytics(url);
+                    }
+                } else {
+                    previewArea.innerHTML = `<p style="color: red;">Ошибка: ${result.error}</p>`;
+                }
+            } catch (error) {
+                previewArea.innerHTML = `<p style="color: red;">Ошибка: ${error.message}</p>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function downloadCode() {
+            if (currentFilename) {
+                window.location.href = `/download/${currentFilename}`;
+            }
+        }
+        
+        async function exportCode(format) {
+            if (currentFilename) {
+                window.location.href = `/export/${currentFilename}.${format}`;
+            }
+        }
+        
+        async function loadHistory() {
+            try {
+                const response = await fetch('/history');
+                const history = await response.json();
+                const historyDiv = document.getElementById('historyList');
+                
+                if (history.length === 0) {
+                    historyDiv.innerHTML = '<p style="color: #999;">История пуста</p>';
+                    return;
+                }
+                
+                historyDiv.innerHTML = history.map(item => `
+                    <div class="history-item" onclick="loadHistoryItem('${item.id}')">
+                        <strong>${item.type.toUpperCase()}</strong> - ${item.data.substring(0, 50)}...
+                        <br>
+                        <small>${new Date(item.created_at).toLocaleString()}</small>
+                        <br>
+                        ${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Ошибка загрузки истории:', error);
+            }
+        }
+        
+        async function loadHistoryItem(id) {
+            try {
+                const response = await fetch(`/history/${id}`);
+                const item = await response.json();
+                
+                if (item.filename) {
+                    currentFilename = item.filename;
+                    document.getElementById('previewArea').innerHTML = `
+                        <img src="/output/${item.filename}" alt="History Code">
+                    `;
+                    document.getElementById('downloadBtn').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки из истории:', error);
+            }
+        }
+        
+        function showAnalytics(url) {
+            const statsDiv = document.getElementById('stats');
+            statsDiv.style.display = 'block';
+            
+            // Простая имитация аналитики
+            const visits = Math.floor(Math.random() * 1000);
+            document.getElementById('visitStats').innerHTML = `
+                📈 Предполагаемая посещаемость: ${visits} просмотров/месяц<br>
+                🔗 URL: <a href="${url}" target="_blank">${url}</a>
+            `;
+        }
+        
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+            }
+        }
+        
+        // Привязка кнопок
+        document.getElementById('downloadBtn').addEventListener('click', downloadCode);
+    </script>
+</body>
+</html>

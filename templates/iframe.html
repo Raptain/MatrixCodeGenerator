@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Встраиваемый генератор кодов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: transparent;
+        }
+        
+        .embed-container {
+            max-width: 100%;
+        }
+        
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="embed-container">
+        <h3>Генератор QR кодов</h3>
+        <input type="text" id="embedData" placeholder="Введите текст или URL">
+        <button onclick="generateEmbed()">Сгенерировать</button>
+        <div id="embedResult"></div>
+    </div>
+    
+    <script>
+        async function generateEmbed() {
+            const data = document.getElementById('embedData').value;
+            if (!data) return;
+            
+            const formData = new FormData();
+            formData.append('code_type', 'qr');
+            formData.append('data_type', 'text');
+            formData.append('data_text', data);
+            formData.append('size', 5);
+            formData.append('border', 1);
+            formData.append('foreground', '#000000');
+            formData.append('background', '#ffffff');
+            
+            const response = await fetch('/generate', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('embedResult').innerHTML = `
+                    <img src="${result.image_url}" alt="QR Code">
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
