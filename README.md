@@ -76,17 +76,4 @@
 
 
 
-\## 📦 Установка
-
-
-
-\### Клонирование репозитория
-
-
-
-```bash
-
-git clone https://github.com/ВАШ\_НИК/matrix-code-generator.git
-
-cd matrix-code-generator
 
